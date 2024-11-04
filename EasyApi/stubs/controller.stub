@@ -1,0 +1,20 @@
+<?php
+
+namespace $NAMESPACE$;
+
+use App\Services\$CLASS_NAME$Service;
+use Illuminate\Http\Request;
+use Modules\Ynotz\EasyApi\Traits\ApiMethodsHelper;
+
+class $CLASS_NAME$Controller
+{
+    use ApiMethodsHelper;
+
+    public function __construct($CLASS_NAME$Service $service)
+    {
+        $this->connectorService = $service;
+        // $this->itemName = null;
+        // $this->itemsCount = 10;
+        // $this->resultsName = 'results';
+    }
+}

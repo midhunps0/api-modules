@@ -1,0 +1,18 @@
+{
+    "name": "ynotz/accesscontrol",
+    "description": "Facilitates management of roles and permissions for users",
+    "type": "library",
+    "authors": [
+        {
+            "name": "midhunps",
+            "email": "midhunps.0@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "autoload": {
+        "psr-4": {
+         "ynotz\\accesscontrol\\": "src/"
+        }
+     }
+}
