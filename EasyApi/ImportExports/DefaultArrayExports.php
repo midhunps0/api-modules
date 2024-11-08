@@ -1,5 +1,5 @@
 <?php
-namespace Modules\Ynotz\EasyAdmin\ImportExports;
+namespace Modules\Ynotz\EasyApi\ImportExports;
 
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromArray;

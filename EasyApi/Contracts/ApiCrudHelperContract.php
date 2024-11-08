@@ -15,12 +15,16 @@ interface ApiCrudHelperContract
     public function store(array $data);
     public function update($id, array $data);
     public function destroy($id);
+    public function getModelShortName();
+
+    public function prepareForIndexValidation(array $data): array;
+    public function prepareForShowValidation(array $data): array;
+    public function prepareForStoreValidation(array $data): array;
+    public function prepareForUpdateValidation(array $data): array;
 
     public function indexDownload(
         array $searches,
         array $sorts,
-        array $filters,
-        array $advParams,
         string $selectedIds
     ): array;
 
@@ -33,6 +37,8 @@ interface ApiCrudHelperContract
     public function suggestlist($search = null);
 
     public function getDownloadCols(): array;
+
+    public function getDownloadColTitles(): array;
 
     public function getIndexValidationRules(): array;
     public function getShowValidationRules($id = null): array;

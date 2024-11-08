@@ -30,13 +30,11 @@ trait DefaultApiCrudHelper{
     protected $selIdsKey = 'id'; // selected items id key
     protected $searchesMap = []; // associative array mapping search query params to db columns
     protected $sortsMap = []; // associative array mapping sort query params to db columns
-    // protected $filtersMap = [];
     protected $orderBy = ['created_at', 'desc'];
     // protected $uniqueSortKey = null; // unique key to sort items. it can be a calculated field to ensure unique values
-    protected $sqlOnlyFullGroupBy = true;
+    // protected $sqlOnlyFullGroupBy = true;
     protected $defaultSearchColumn = 'name';
     protected $defaultSearchMode = 'startswith'; // contains, startswith, endswith
-    protected $relations = [];
     protected $processRelationsManually = false;
     protected $processMediaManually = false;
 
@@ -112,7 +110,7 @@ trait DefaultApiCrudHelper{
     private function prepareSearchParamsForQuery(array $searchData, $inputParams): array
     {
         $preparedSearches = [];
-        $searchFields = $this->searchFieldsOperations($inputParams);
+        $searchFields = $this->prepareSarchFields($inputParams);
         foreach ($searchData as $field => $value) {
             if (isset($searchFields[$field])) {
                 $this->setSearchUnitForField($preparedSearches, $field, $value, $searchFields[$field]);
@@ -128,11 +126,9 @@ trait DefaultApiCrudHelper{
         }
     }
 
-    private function searchFieldsOperations($data): array
+    private function prepareSarchFields($data): array
     {
-        return [
-            // 'name' => OperationEnum::CONTAINS
-        ];
+        return $data;
     }
 
     public function show($id)
@@ -162,15 +158,6 @@ trait DefaultApiCrudHelper{
         return $this->query ?? $this->modelClass::query();
     }
 
-    // public function getShowPageData($id)
-    // {
-    //     return $this->getQuery()->where($this->key, $id)->get()->first();
-    //     // return new ShowPageData(
-    //     //     Str::ucfirst($this->getModelShortName()),
-    //     //     $this->getQuery()->where($this->key, $id)->get()->first()
-    //     // );
-    // }
-
     private function getItemIds($results) {
         $ids = $results->pluck($this->idKey)->toArray();
         return json_encode($ids);
@@ -179,15 +166,11 @@ trait DefaultApiCrudHelper{
     public function indexDownload(
         array $searches,
         array $sorts,
-        array $filters,
-        array $advParams,
         string $selectedIds
     ): array {
         $queryData = $this->getQueryAndParams(
             $searches,
             $sorts,
-            $filters,
-            $advParams,
             $selectedIds
         );
             // DB::statement("SET SQL_MODE=''");
@@ -287,6 +270,7 @@ trait DefaultApiCrudHelper{
                                 $fkey = $instance->$rel()->getForeignKeyName();
                                 $lkey = $instance->$rel()->getLocalKeyName();
                                 $darray = array_merge([$fkey => $instance->$lkey], $val);
+
                                 $cl::create($darray);
                                 break;
                             case 'HasMany':
@@ -302,14 +286,14 @@ trait DefaultApiCrudHelper{
                     }
                 }
             } else {
-                $this->processRelationsAfterStore($instance, $relations);
+                $this->processRelationsAfterStore($instance);
             }
             if (!$this->processMediaManually) {
                 foreach ($mediaFields as $fieldName => $val) {
                     $instance->addMediaFromEAInput($fieldName, $val);
                 }
             } else {
-                $this->processMediaAfterStore($instance, $mediaFields);
+                $this->processMediaAfterStore($instance);
             }
             DB::commit();
             $this->processAfterStore($instance);
@@ -323,9 +307,10 @@ trait DefaultApiCrudHelper{
 
     public function update($id, array $data)
     {
-        $data = $this->processBeforeUpdate($data, $id);
-        info('data');
+        info('update inputs: ');
         info($data);
+        $data = $this->processBeforeUpdate($data, $id);
+
         $instance = $this->modelClass::find($id);
         $oldInstance = $instance;
         $name = ucfirst(Str::lower($this->getModelShortName()));
@@ -344,8 +329,7 @@ trait DefaultApiCrudHelper{
                 $ownFields[$key] = $value;
             }
         }
-        info('ownFields');
-        info($ownFields);
+
         DB::beginTransaction();
         try {
             $instance->update($ownFields);
@@ -382,14 +366,20 @@ trait DefaultApiCrudHelper{
                     }
                 }
             } else {
-                $this->processRelationsAfterUpdate($instance, $relations);
+                $this->processRelationsAfterUpdate($instance);
             }
+            info('about to process media...');
             if (!$this->processMediaManually) {
+                info('inside process auto');
+                info($mediaFields);
                 foreach ($mediaFields as $fieldName => $val) {
+                    info('field: '.$fieldName);
+                    info('value: ');
+                    info($val);
                     $instance->syncMedia($fieldName, $val);
                 }
             } else {
-                $this->processMediaAfterUpdate($instance, $mediaFields);
+                $this->processMediaAfterUpdate($instance);
             }
 
 //             foreach ($mediaFields as $fieldName => $val) {
@@ -401,7 +391,7 @@ trait DefaultApiCrudHelper{
             info('rolled back: '.$e->__toString());
             DB::rollBack();
         }
-
+        $instance->refresh();
         return $instance;
     }
 
@@ -473,8 +463,7 @@ trait DefaultApiCrudHelper{
     public function destroy($id)
     {
         $item = $this->modelClass::find($id);
-        info('item inside delete');
-        info($item);
+
         $modelName = ucfirst(Str::lower($this->getModelShortName()));
         if ($item == null) {
             throw new ModelNotFoundException("The $modelName with id $id does not exist.");
@@ -582,34 +571,9 @@ trait DefaultApiCrudHelper{
         return $query;
     }
 
-    /*
-    private function getFilterParams($query, array $filters, $filtersMap): array
-    {
-        $filterParams = [];
-        foreach ($filters as $filter) {
-            $data = explode('::', $filter);
-            $rel = $filtersMap[$data[0]] ?? $data[0];
-            // $rel = $data[0];
-            // dd($rel);
-            $op = $this->getSearchOperator($data[1], $data[2]);
-            // if($this->isRelation($rel)) {
-            if($this->isRelation($rel)) {
-                // dd($rel, $op['op'], $op['val']);
-                $this->applyRelationSearch($query, $rel, $this->relations()[$rel]['filter_column'], $op['op'], $op['val']);
-            } else {
-                $query->where($rel, $op['op'], $op['val']);
-            }
-            $filterParams[$data[0]] = $data[2];
-        }
-        return $filterParams;
-    }
-    */
-
     private function applyRelationSearch(Builder $query, $relName, $key, $op, $val): void
     {
         // If isset(search_fn): execute it
-        info('$op');
-        info($op);
         if (isset($this->relations()[$relName]['search_fn'])) {
             $this->relations()[$relName]['search_fn']($query, $op, $val);
         } else {
@@ -653,12 +617,11 @@ trait DefaultApiCrudHelper{
 
     private function getRelatedModelClass(string $relation): string
     {
-        info('Model Class: XX - ' . $this->modelClass);
         $cl = $this->modelClass;
         $obj = new $cl;
-        info(new $cl);
+
         $r = $obj->$relation();
-        info($r->getRelated());
+
         return $r->getRelated();
     }
 
@@ -669,31 +632,13 @@ trait DefaultApiCrudHelper{
 
     private function isMideaField($key): bool
     {
-        return in_array($key, $this->getFileFields());
+        return in_array($key, $this->getMediaFields());
     }
 
-    private function getFileFields(): array
+    private function getMediaFields(): array
     {
-        return $this->mediaFields ?? [];
+        return [];
     }
-
-
-    // private function getPaginatorArray(LengthAwarePaginator $results): array
-    // {
-    //     $data = $results->toArray();
-    //     return [
-    //         'currentPage' => $data['current_page'],
-    //         'totalItems' => $data['total'],
-    //         'lastPage' => $data['last_page'],
-    //         'itemsPerPage' => $results->perPage(),
-    //         'nextPageUrl' => $results->nextPageUrl(),
-    //         'prevPageUrl' => $results->previousPageUrl(),
-    //         'elements' => $results->links()['elements'],
-    //         'firstItem' => $results->firstItem(),
-    //         'lastItem' => $results->lastItem(),
-    //         'count' => $results->count(),
-    //     ];
-    // }
 
     protected function relations(): array
     {
@@ -717,53 +662,35 @@ trait DefaultApiCrudHelper{
         return $results;
     }
 
-    protected function preIndexExtra(): void {}
-    protected function postIndexExtra(): void {}
+    // protected function getSelectedIdsUrl(): string
+    // {
+    //     return route(Str::lower(Str::plural($this->getModelShortName())).'.selectIds');
+    // }
 
-    protected function getIndexHeaders(): array
-    {
-        return [];
-    }
+    // protected function getDownloadUrl(): string
+    // {
+    //     return route(Str::lower(Str::plural($this->getModelShortName())).'.download');
+    // }
 
-    protected function getIndexColumns(): array
-    {
-        return [];
-    }
+    // protected function getCreateRoute(): string
+    // {
+    //     return Str::lower(Str::plural($this->getModelShortName())).'.create';
+    // }
 
-    protected function getPageTitle(): string
-    {
-        return Str::headline(Str::plural($this->getModelShortName()));
-    }
+    // protected function getViewRoute(): string
+    // {
+    //     return Str::lower(Str::plural($this->getModelShortName())).'.view';
+    // }
 
-    protected function getSelectedIdsUrl(): string
-    {
-        return route(Str::lower(Str::plural($this->getModelShortName())).'.selectIds');
-    }
+    // protected function getEditRoute(): string
+    // {
+    //     return Str::lower(Str::plural($this->getModelShortName())).'.edit';
+    // }
 
-    protected function getDownloadUrl(): string
-    {
-        return route(Str::lower(Str::plural($this->getModelShortName())).'.download');
-    }
-
-    protected function getCreateRoute(): string
-    {
-        return Str::lower(Str::plural($this->getModelShortName())).'.create';
-    }
-
-    protected function getViewRoute(): string
-    {
-        return Str::lower(Str::plural($this->getModelShortName())).'.view';
-    }
-
-    protected function getEditRoute(): string
-    {
-        return Str::lower(Str::plural($this->getModelShortName())).'.edit';
-    }
-
-    protected function getDestroyRoute(): string
-    {
-        return Str::lower(Str::plural($this->getModelShortName())).'.destroy';
-    }
+    // protected function getDestroyRoute(): string
+    // {
+    //     return Str::lower(Str::plural($this->getModelShortName())).'.destroy';
+    // }
 
     protected function getIndexId(): string
     {
@@ -830,39 +757,17 @@ trait DefaultApiCrudHelper{
         return $data;
     }
 
-    public function processRelationsAfterStore(Model $instance, array $relations)
+    public function processRelationsAfterStore(Model $instance)
     {}
 
-    public function processMediaAfterStore(Model $instance, array $relations)
+    public function processMediaAfterStore(Model $instance)
     {}
 
-    public function processRelationsAfterUpdate(Model $instance, array $relations)
+    public function processRelationsAfterUpdate(Model $instance)
     {}
 
-    public function processMediaAfterUpdate(Model $instance, array $relations)
+    public function processMediaAfterUpdate(Model $instance)
     {}
-
-    public function getCreateFormElements(): array
-    {
-        $t = [];
-        foreach ($this->formElements() as $key => $el) {
-            if (!isset($el['form_types']) || in_array('create', $el['form_types'])) {
-                $t[$key] = $el;
-            }
-        }
-        return $t;
-    }
-
-    public function getEditFormElements($model = null): array
-    {
-        $t = [];
-        foreach ($this->formElements($model) as $key => $el) {
-            if (!isset($el['form_types']) || in_array('edit', $el['form_types'])) {
-                $t[$key] = $el;
-            }
-        }
-        return $t;
-    }
 
     public function authoriseIndex(): bool
     {
@@ -897,21 +802,6 @@ trait DefaultApiCrudHelper{
     public function authoriseDestroy($item): bool
     {
         return true;
-    }
-
-    private function getSelectionEnabled(): bool
-    {
-        return $this->selectionEnabled ?? true;
-    }
-
-    private function getExportsEnabled(): bool
-    {
-        return $this->exportsEnabled ?? true;
-    }
-
-    private function getshowAddButton(): bool
-    {
-        return $this->showAddButton ?? true;
     }
 }
 ?>

@@ -16,9 +16,9 @@ Route::group(['middleware' => ['web', 'auth'], 'prefix' => 'manage'], function (
     // Route::resource('roles', RolesController::class);
     // Route::get('/permissions/select-ids', [PermissionsController::class, 'selectIds'])->name('permissions.selectIds');
     // Route::resource('permissions', PermissionsController::class);
-    RouteHelper::getEasyRoutes(modelName: Role::class, controller: RolesController::class);
-    RouteHelper::getEasyRoutes(modelName: Permission::class, controller: PermissionsController::class);
-    RouteHelper::getEasyRoutes(modelName: User::class, controller: UsersController::class);
+    // RouteHelper::getEasyRoutes(modelName: Role::class, controller: RolesController::class);
+    // RouteHelper::getEasyRoutes(modelName: Permission::class, controller: PermissionsController::class);
+    // RouteHelper::getEasyRoutes(modelName: User::class, controller: UsersController::class);
     Route::get('/roles-permissions', [RolesController::class, 'rolesPermissions'])->name('roles.permissions');
     Route::post('/roles/permission-update', [RolesController::class, 'permissionUpdate'])->name('roles.update_permissions');
 

@@ -14,19 +14,15 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
 
         // $this->query = null;
         // $this->idKey = 'id'; // id column in the db table to identify the items
-        // $this->selects = '*'; // query select keys/calcs
+        // $this->selects = '*'; // array of field namess to be selected or '*' for all fields
         // $this->selIdsKey = 'id'; // selected items id key
         // $this->searchesMap = []; // associative array mapping search query params to db
         // $this->sortsMap = []; // associative array mapping sort query params to db columns
-        // $this->filtersMap = [];
         // $this->orderBy = ['created_at', 'desc'];
-        // $this->uniqueSortKey = null; // unique key to sort items. it can be a
-        // $this->sqlOnlyFullGroupBy = true;
-        // $this->defaultSearchColumn = 'name';
-        // $this->defaultSearchMode = 'startswith'; // contains, startswith, endswith
-        // $this->relations = [];
-        // $this->processRelationsManually = false;
-        // $this->processMediaManually = false;
+        // $this->defaultSearchColumn = 'name'; // used only for suggestList query
+        // $this->defaultSearchMode = 'startswith'; // contains, startswith, endswith. used only for suggestList query
+        // $this->processRelationsManually = false; // if this is true, the function processRelationsAfterStore(Model $instance) & processRelationsAfterUpdate(Model $instance) should be implemented
+        // $this->processMediaManually = false; // if this is true, the function processMediaAfterStore(Model $instance) & processMediaAfterUpdate(Model $instance) should be implemented
         // $this->downloadFileName = 'results';
     }
 
@@ -40,19 +36,40 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
     protected function relations()
     {
         return [];
-        // // Example:
+
+        /**
+         * Mention all relations of the model here except belongsTo type. belongsTo column shall be treated just like any other column in the table (the request parameter shall match the column name).
+         */
+        // Example:
         // return [
-        //     'author' => [
-        //         'search_column' => 'id',
-        //         'filter_column' => 'id',
-        //         'sort_column' => 'id',
+        //     'publisher' => [
+        //         'search_column' => 'name', // the column in relations table to be searched
+        //         'sort_column' => 'id', // the column in relations table to be used for sorting.
         //     ],
-        //     'reviewScore' => [
-        //         'search_column' => 'score',
-        //         'filter_column' => 'id',
-        //         'sort_column' => 'id',
+        //     'tags' => [
+        //         'search_column' => 'name'
         //     ],
+        //     'inventory' => [], // this is a hasOne relation that doesn't need any search or sort action
+        //     // Complex CRUD operation
+        //     'articles' => [
+        //         'store_fn' => function($instance, $val, $data) {
+        //             // code to store the relation
+        //         },
+        //         'update_fn' => function($instance, $val, $data) {
+        //             // code to update the relation
+        //         },
+        //     ]
         // ];
+    }
+
+    private function getMediaFields(): array
+    {
+        return [];
+        // Example
+        // return [
+            // 'photo',
+            // 'id_proof'
+        // ]
     }
 
     public function getDownloadCols(): array
@@ -87,11 +104,17 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
     public function getStoreValidationRules(): array
     {
         return [];
-        // // Example:
-        // return [
-        //     'title' => ['required', 'string'],
-        //     'description' => ['required', 'string'],
-        // ];
+        // Example:
+        /*
+        return [
+            'title' => ['required', 'string'],
+            'description' => ['required', 'string'],
+            'publisher_id' => ['required', 'string'], // (belongsTo relation)
+            'tags' => ['sometimes', 'array'], // (belongToMany relation)
+            'tags.*' => ['integer'],
+            'inventory.quantity' => ['required', 'integer'], // (hasOne relation. form element name="inventory[quantity]")
+        ];
+        */
     }
 
     public function getUpdateValidationRules($id = null): array

@@ -8,14 +8,15 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
-use Modules\Ynotz\EasyAdmin\ImportExports\DefaultArrayExports;
+use Modules\Ynotz\EasyApi\Contracts\ApiCrudHelperContract;
+use Modules\Ynotz\EasyApi\ImportExports\DefaultArrayExports;
 use Throwable;
 
 trait ApiMethodsHelper {
     private $itemName = null;
     private $itemsCount = 10;
     private $resultsName = 'results';
-    private $connectorService;
+    private ApiCrudHelperContract $connectorService;
 
     public function index(Request $request)
     {
@@ -30,7 +31,8 @@ trait ApiMethodsHelper {
                 return response()->json(
                     [
                         'success' => false,
-                        'error' => $validator->errors()
+                        'error' => $validator->errors(),
+                        'message' => $validator->errors()
                     ],
                     status: 422
                 );
@@ -46,11 +48,11 @@ trait ApiMethodsHelper {
                 'data' => $result
             ]);
         } catch (Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
 
@@ -69,7 +71,8 @@ trait ApiMethodsHelper {
                 return response()->json(
                     [
                         'success' => false,
-                        'error' => $validator->errors()
+                        'error' => $validator->errors(),
+                        'message' => $validator->errors()
                     ],
                     status: 422
                 );
@@ -82,11 +85,11 @@ trait ApiMethodsHelper {
                 'data' => $this->connectorService->show($id)
             ]);
         } catch (\Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
     }
@@ -105,11 +108,11 @@ trait ApiMethodsHelper {
                 'ids' => $ids
             ]);
         } catch (\Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
     }
@@ -135,11 +138,11 @@ trait ApiMethodsHelper {
                     .$this->request->input('format', 'xlsx')
             );
         } catch (\Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
 
@@ -172,7 +175,7 @@ trait ApiMethodsHelper {
                     $validator->validated()
                 );
             } else {
-                if (config('easyadmin.enforce_validation')) {
+                if (config('easyapi.enforce_validation')) {
                     return response()->json(
                         [
                             'success' => false,
@@ -190,11 +193,11 @@ trait ApiMethodsHelper {
                 'message' => 'New '.$this->getItemName().' added.'
             ]);
         } catch (\Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
     }
@@ -203,7 +206,8 @@ trait ApiMethodsHelper {
     {
         try {
             $rules = $this->connectorService->getUpdateValidationRules($id);
-
+            info('rules');
+            info($rules);
             if (count($rules) > 0) {
                 $validator = Validator::make($this->connectorService->prepareForUpdateValidation($request->all()), $rules);
 
@@ -218,7 +222,7 @@ trait ApiMethodsHelper {
                 }
                 $result = $this->connectorService->update($id, $validator->validated());
             } else {
-                if (config('easyadmin.enforce_validation')) {
+                if (config('easyapi.enforce_validation')) {
                     return response()->json(
                         [
                             'success' => false,
@@ -237,11 +241,11 @@ trait ApiMethodsHelper {
                 'message' => 'New '.$this->getItemName().' updated.'
             ]);
         } catch (\Throwable $e) {
-            $debug = env('APP_DEBUG');
-            if ($debug) { info($e); }
+            if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
-                'error' => $debug ? $e->__toString() : $e->getMessage()
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
             ]);
         }
     }
@@ -275,7 +279,8 @@ trait ApiMethodsHelper {
             } else {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Unexpected error'
+                    'error' => 'Unexpected error',
+                    'message' => 'Failed to delete '.$this->connectorService->getModelShortname(),
                 ]);
             }
         } catch (\Throwable $e) {
