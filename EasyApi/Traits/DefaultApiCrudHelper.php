@@ -104,7 +104,6 @@ trait DefaultApiCrudHelper{
             $this->resultsName => $returnData,
             'query_params' => $inputParams,
         ];
-
     }
 
     private function prepareSearchParamsForQuery(array $searchData, $inputParams): array
