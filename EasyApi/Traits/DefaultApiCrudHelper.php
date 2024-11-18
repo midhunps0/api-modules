@@ -112,7 +112,40 @@ trait DefaultApiCrudHelper{
         $searchFields = $this->prepareSarchFields($inputParams);
         foreach ($searchData as $field => $value) {
             if (isset($searchFields[$field])) {
-                $this->setSearchUnitForField($preparedSearches, $field, $value, $searchFields[$field]);
+                $op = OperationEnum::IS;
+                switch($searchFields[$field]) {
+                    case 'is':
+                        $op = OperationEnum::IS;
+                        break;
+                    case 'ct':
+                        $op = OperationEnum::CONTAINS;
+                        break;
+                    case 'st':
+                        $op = OperationEnum::STARTS_WITH;
+                        break;
+                    case 'en':
+                        $op = OperationEnum::ENDS_WITH;
+                        break;
+                    case 'gt':
+                        $op = OperationEnum::GREATER_THAN;
+                        break;
+                    case 'lt':
+                        $op = OperationEnum::LESS_THAN;
+                        break;
+                    case 'gte':
+                        $op = OperationEnum::GREATER_THAN_OR_EQUAL_TO;
+                        break;
+                    case 'lte':
+                        $op = OperationEnum::LESS_THAN_OR_EQUAL_TO;
+                        break;
+                    case 'eq':
+                        $op = OperationEnum::EQUAL_TO;
+                        break;
+                    case 'ne':
+                        $op = OperationEnum::NO_EQUAL_TO;
+                        break;
+                }
+                $this->setSearchUnitForField($preparedSearches, $field, $value, $op);
             }
         }
         return $preparedSearches;
