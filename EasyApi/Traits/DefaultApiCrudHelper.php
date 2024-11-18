@@ -821,11 +821,6 @@ trait DefaultApiCrudHelper{
         return true;
     }
 
-    public function authoriseEdit($id): bool
-    {
-        return true;
-    }
-
     public function authoriseUpdate($item): bool
     {
         return true;
