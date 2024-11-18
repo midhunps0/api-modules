@@ -17,10 +17,13 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
         // $this->selects = '*'; // array of field namess to be selected or '*' for all fields
         // $this->selIdsKey = 'id'; // selected items id key
         // $this->searchesMap = []; // associative array mapping search query params to db
+        // $this->searchTypesSettings = [
+        //     'name' => OperationEnum::EQUAL_TO // Example
+        // ]; // Associative array mentioning what operation (OperationEnum case) is to be applied on each search field. Default for all fields is OperatoinEnum::EQUAL_TO. This will be overridden by search_types[] input from front-end.
         // $this->sortsMap = []; // associative array mapping sort query params to db columns
         // $this->orderBy = ['created_at', 'desc'];
-        // $this->defaultSearchColumn = 'name'; // used only for suggestList query
-        // $this->defaultSearchMode = 'startswith'; // contains, startswith, endswith. used only for suggestList query
+        // $this->suggestListSearchColumn = 'name'; // used only for suggestList query
+        // $this->suggestListSearchMode = 'startswith'; // contains, startswith, endswith. used only for suggestList query
         // $this->processRelationsManually = false; // if this is true, the function processRelationsAfterStore(Model $instance) & processRelationsAfterUpdate(Model $instance) should be implemented
         // $this->processMediaManually = false; // if this is true, the function processMediaAfterStore(Model $instance) & processMediaAfterUpdate(Model $instance) should be implemented
         // $this->downloadFileName = 'results';

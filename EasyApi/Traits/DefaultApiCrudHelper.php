@@ -29,12 +29,13 @@ trait DefaultApiCrudHelper{
     protected $selects = '*'; // query select keys/calcs
     protected $selIdsKey = 'id'; // selected items id key
     protected $searchesMap = []; // associative array mapping search query params to db columns
+    protected $searchTypesSettings = []; // Associative array mentioning what operation (OperationEnum case) is to be applied on each search field. Default for all fields is OperatoinEnum::EQUAL_TO. This will be overridden by search_types[] input from front-end. item example: 'name' => OperationEnum::EQUAL_TO
     protected $sortsMap = []; // associative array mapping sort query params to db columns
     protected $orderBy = ['created_at', 'desc'];
     // protected $uniqueSortKey = null; // unique key to sort items. it can be a calculated field to ensure unique values
     // protected $sqlOnlyFullGroupBy = true;
-    protected $defaultSearchColumn = 'name';
-    protected $defaultSearchMode = 'startswith'; // contains, startswith, endswith
+    protected $suggestListSearchColumn = 'name';
+    protected $suggestListSearchMode = 'startswith'; // contains, startswith, endswith
     protected $processRelationsManually = false;
     protected $processMediaManually = false;
 
@@ -58,7 +59,7 @@ trait DefaultApiCrudHelper{
             $itemsCount = $data['items_per_page'] ?? 15;
             $page = $data['page'] ?? 1;
             unset($data['paginate']);
-            unset($data['paginitems_per_pageate']);
+            unset($data['items_per_page']);
             unset($data['page']);
         }
         $selectedIds = null;
@@ -71,8 +72,12 @@ trait DefaultApiCrudHelper{
             $sortParams = $data['sorts'];
             unset($data['sorts']);
         }
-
-        $preparedSearchParams = $this->prepareSearchParamsForQuery($data, $inputParams);
+        $searchTypes = [];
+        if (isset($data['search_types'])) {
+            $searchTypes = $data['search_types'];
+            unset($data['search_types']);
+        }
+        $preparedSearchParams = $this->prepareSearchParamsForQuery($data, $searchTypes);
 
         $queryData = $this->getQueryAndParams(
             $preparedSearchParams,
@@ -106,61 +111,28 @@ trait DefaultApiCrudHelper{
         ];
     }
 
-    private function prepareSearchParamsForQuery(array $searchData, $inputParams): array
+    private function prepareSearchParamsForQuery(array $searchData, $searchTypes): array
     {
         $preparedSearches = [];
-        $searchFields = $this->prepareSarchFields($inputParams);
+        $searchFieldTypes = $this->getSarchTypes($searchTypes);
         foreach ($searchData as $field => $value) {
-            if (isset($searchFields[$field])) {
-                $op = OperationEnum::IS;
-                switch($searchFields[$field]) {
-                    case 'is':
-                        $op = OperationEnum::IS;
-                        break;
-                    case 'ct':
-                        $op = OperationEnum::CONTAINS;
-                        break;
-                    case 'st':
-                        $op = OperationEnum::STARTS_WITH;
-                        break;
-                    case 'en':
-                        $op = OperationEnum::ENDS_WITH;
-                        break;
-                    case 'gt':
-                        $op = OperationEnum::GREATER_THAN;
-                        break;
-                    case 'lt':
-                        $op = OperationEnum::LESS_THAN;
-                        break;
-                    case 'gte':
-                        $op = OperationEnum::GREATER_THAN_OR_EQUAL_TO;
-                        break;
-                    case 'lte':
-                        $op = OperationEnum::LESS_THAN_OR_EQUAL_TO;
-                        break;
-                    case 'eq':
-                        $op = OperationEnum::EQUAL_TO;
-                        break;
-                    case 'ne':
-                        $op = OperationEnum::NO_EQUAL_TO;
-                        break;
-                }
-                $this->setSearchUnitForField($preparedSearches, $field, $value, $op);
-            }
+                $op = $searchFieldTypes[$field] ?? OperationEnum::EQUAL_TO;
+                array_push($preparedSearches, new SearchUnit($field, $op, $value));
         }
         return $preparedSearches;
     }
 
-    private function setSearchUnitForField($preparedData, $field, $value, OperationEnum $operation): void
+    private function getSarchTypes(array $searchTypes): array
     {
-        if ($field != null) {
-            array_push($preparedData, new SearchUnit($field, $operation, $value));
-        }
-    }
-
-    private function prepareSarchFields($data): array
-    {
-        return $data;
+        return array_merge(
+            $this->searchTypesSettings,
+            array_map(
+                function ($t) {
+                    return OperationEnum::from($t);
+                },
+                $searchTypes
+            )
+        );
     }
 
     public function show($id)
@@ -339,8 +311,6 @@ trait DefaultApiCrudHelper{
 
     public function update($id, array $data)
     {
-        info('update inputs: ');
-        info($data);
         $data = $this->processBeforeUpdate($data, $id);
 
         $instance = $this->modelClass::find($id);
@@ -400,14 +370,8 @@ trait DefaultApiCrudHelper{
             } else {
                 $this->processRelationsAfterUpdate($instance);
             }
-            info('about to process media...');
             if (!$this->processMediaManually) {
-                info('inside process auto');
-                info($mediaFields);
                 foreach ($mediaFields as $fieldName => $val) {
-                    info('field: '.$fieldName);
-                    info('value: ');
-                    info($val);
                     $instance->syncMedia($fieldName, $val);
                 }
             } else {
@@ -520,39 +484,6 @@ trait DefaultApiCrudHelper{
         return true;
     }
 
-    private function getSearchOperator($op, $val)
-    {
-        $ops = [
-            OperationEnum::IS => 'like',
-            OperationEnum::CONTAINS => 'like',
-            OperationEnum::STARTS_WITH => 'like',
-            OperationEnum::ENDS_WITH => 'like',
-            OperationEnum::GREATER_THAN => '>',
-            OperationEnum::LESS_THAN => '<',
-            OperationEnum::GREATER_THAN_OR_EQUAL_TO => '>=',
-            OperationEnum::LESS_THAN_OR_EQUAL_TO => '<=',
-            OperationEnum::EQUAL_TO => '=',
-            OperationEnum::NO_EQUAL_TO => '<>',
-        ];
-        $v = $val;
-        switch($op) {
-            case OperationEnum::CONTAINS:
-                $v = '%'.$val.'%';
-                break;
-            case OperationEnum::STARTS_WITH:
-                $v = $val.'%';
-                break;
-            case OperationEnum::ENDS_WITH:
-                $v = '%'.$val;
-                break;
-        }
-
-        return [
-            'op' => $ops[$op],
-            'val' => $v
-        ];
-    }
-
     private function setSearchParams($query, array $searches, $searchesMap)
     {
         foreach ($searches as $search) {
@@ -560,11 +491,12 @@ trait DefaultApiCrudHelper{
                 throw new InvalidArgumentException('Inside setSearchParams: $searches shall be an array of SearchUnits.');
             }
             $field = $searchesMap[$search->field] ?? $search->field;
-            $op = $this->getSearchOperator($search->operation, $search->value);
+            $operator = $search->operation->operator();
+            $formattedValue = $search->operation->formatSearchValue($search->value);
             if($this->isRelation(explode('.', $field)[0])) {
-                $this->applyRelationSearch($query, $field, $this->relations()[$field]['search_column'], $op['op'], $op['val']);
+                $this->applyRelationSearch($query, $field, $this->relations()[$field]['search_column'], $operator, $formattedValue);
             } else {
-                $query->where($field, $op['op'], $op['val']);
+                $query->where($field, $operator, $formattedValue);
             }
         }
         return $query;
@@ -742,7 +674,7 @@ trait DefaultApiCrudHelper{
     public function suggestList($search = null)
     {
         if (isset($search)) {
-            switch($this->defaultSearchMode) {
+            switch($this->suggestListSearchMode) {
                 case 'contains':
                     $search = '%'.$search.'%';
                     break;
@@ -753,7 +685,7 @@ trait DefaultApiCrudHelper{
                     $search = '%'.$search;
                     break;
             }
-            return $this->modelClass::where($this->defaultSearchColumn, 'like', $search)->get();
+            return $this->modelClass::where($this->suggestListSearchColumn, 'like', $search)->get();
         } else {
             return $this->modelClass::all();
         }
