@@ -80,10 +80,11 @@ class MakeEasyapiCommand extends Command
      */
     public function getStubPath($type)
     {
+        $ds = DIRECTORY_SEPARATOR;
         if ($type == 'controller') {
-            return __DIR__ . '/../stubs/controller.stub';
+            return __DIR__ . $ds.'..'.$ds.'stubs'.$ds.'controller.stub';
         }
-        return __DIR__ . '/../stubs/service.stub';
+        return __DIR__ . $ds.'..'.$ds.'stubs'.$ds.'service.stub';
     }
 
     /**
@@ -95,6 +96,7 @@ class MakeEasyapiCommand extends Command
     */
     public function getStubVariables($type)
     {
+        $ds = DIRECTORY_SEPARATOR;
         $arr = [];
         $classNameSingular = $this->getSingularClassName($this->argument('name'));
         $classNamePlural = Str::plural($classNameSingular);
@@ -102,7 +104,7 @@ class MakeEasyapiCommand extends Command
         switch($type) {
             case 'controller':
                 $arr = [
-                    'NAMESPACE'         => 'App\Http\Controllers',
+                    'NAMESPACE'         => 'App'.$ds.'Http'.$ds.'Controllers',
                     'CLASS_NAME'        => $classNameSingular,
                     'CLASS_NAME_PLURAL_LOWER' => $classNamePluralLower,
                     'CLASS_NAME_PLURAL' => $classNamePlural
@@ -110,7 +112,7 @@ class MakeEasyapiCommand extends Command
                 break;
             case 'service':
                 $arr = [
-                    'NAMESPACE'         => 'App\Services',
+                    'NAMESPACE'         => 'App'.$ds.'Services',
                     'CLASS_NAME'        => $classNameSingular,
                     'CLASS_NAME_PLURAL_LOWER' => $classNamePluralLower,
                     'CLASS_NAME_PLURAL' => $classNamePlural
@@ -159,10 +161,11 @@ class MakeEasyapiCommand extends Command
      */
     public function getSourceFilePath($type)
     {
+        $ds = DIRECTORY_SEPARATOR;
         if ($type == 'controller') {
-            return base_path('App/Http/Controllers') .'/' .$this->getSingularClassName($this->argument('name')) . 'Controller.php';
+            return app_path().$ds.'Http'.$ds.'Controllers' .$ds .$this->getSingularClassName($this->argument('name')) . 'Controller.php';
         }
-        return base_path('App/Services') .'/' .$this->getSingularClassName($this->argument('name')) . 'Service.php';
+        return app_path().$ds.'Services'.$ds .$this->getSingularClassName($this->argument('name')) . 'Service.php';
     }
 
     /**
