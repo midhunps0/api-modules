@@ -104,8 +104,10 @@ class MakeEasyapiCommand extends Command
         $classNamePluralLower = Str::lower($classNamePlural);
 
         $controllerDirectory = $this->argument('cp');
+        $controllerDirectory = implode('\\', explode('/', $controllerDirectory));
         $controllerDirectory = $controllerDirectory != null ? '\\'.$controllerDirectory : '';
         $serviceDirectory = $this->argument('sp');
+        $serviceDirectory = implode('\\', explode('/', $serviceDirectory));
         $serviceDirectory = $serviceDirectory != null ? '\\'.$serviceDirectory : '';
 
         $controllerNamespace = 'App\\Http\\Controllers'.$controllerDirectory;
