@@ -21,7 +21,8 @@ class MakeEasyapiCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Make Easyapi Controller & Service classes for the give model name. --cp=ControllerClass\Path --sp=ServiceClass\Path';
+    protected $description = 'Make Easyapi Controller & Service classes for the give model name.
+        Eg: php artisan make:easyapi ModelName ControllerClass/Path ServiceClass/Path';
 
     /**
      * Filesystem instance
