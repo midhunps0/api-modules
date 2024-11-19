@@ -14,14 +14,14 @@ class MakeEasyapiCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'make:easyapi {name}';
+    protected $signature = 'make:easyapi {name} {cp?} {sp?}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Make Easyadmin Controller & Service classes for the give model name.';
+    protected $description = 'Make Easyapi Controller & Service classes for the give model name. --cp=ControllerClass\Path --sp=ServiceClass\Path';
 
     /**
      * Filesystem instance
@@ -101,10 +101,19 @@ class MakeEasyapiCommand extends Command
         $classNameSingular = $this->getSingularClassName($this->argument('name'));
         $classNamePlural = Str::plural($classNameSingular);
         $classNamePluralLower = Str::lower($classNamePlural);
+
+        $controllerDirectory = $this->argument('cp');
+        $controllerDirectory = $controllerDirectory != null ? '\\'.$controllerDirectory : '';
+        $serviceDirectory = $this->argument('sp');
+        $serviceDirectory = $serviceDirectory != null ? '\\'.$serviceDirectory : '';
+
+        $controllerNamespace = 'App\\Http\\Controllers'.$controllerDirectory;
+        $serviceNamespace = 'App\\Services'.$serviceDirectory;
+
         switch($type) {
             case 'controller':
                 $arr = [
-                    'NAMESPACE'         => 'App'.$ds.'Http'.$ds.'Controllers',
+                    'NAMESPACE'         => $controllerNamespace,
                     'CLASS_NAME'        => $classNameSingular,
                     'CLASS_NAME_PLURAL_LOWER' => $classNamePluralLower,
                     'CLASS_NAME_PLURAL' => $classNamePlural
@@ -112,7 +121,7 @@ class MakeEasyapiCommand extends Command
                 break;
             case 'service':
                 $arr = [
-                    'NAMESPACE'         => 'App'.$ds.'Services',
+                    'NAMESPACE'         => $serviceNamespace,
                     'CLASS_NAME'        => $classNameSingular,
                     'CLASS_NAME_PLURAL_LOWER' => $classNamePluralLower,
                     'CLASS_NAME_PLURAL' => $classNamePlural
@@ -162,10 +171,24 @@ class MakeEasyapiCommand extends Command
     public function getSourceFilePath($type)
     {
         $ds = DIRECTORY_SEPARATOR;
-        if ($type == 'controller') {
-            return app_path().$ds.'Http'.$ds.'Controllers' .$ds .$this->getSingularClassName($this->argument('name')) . 'Controller.php';
+
+        $controllerDirectory = $this->argument('cp');
+        $cdirPath = '';
+        if($controllerDirectory != null) {
+            $cdirPath = implode($ds, explode('/',$controllerDirectory)).$ds;
         }
-        return app_path().$ds.'Services'.$ds .$this->getSingularClassName($this->argument('name')) . 'Service.php';
+
+        $serviceDirectory = $this->argument('sp');
+        $sdirPath = '';
+        if($serviceDirectory != null) {
+            $sdirPath = implode($ds, explode('/',$serviceDirectory)).$ds;
+        }
+
+
+        if ($type == 'controller') {
+            return app_path().$ds.'Http'.$ds.'Controllers' .$ds.$cdirPath.$this->getSingularClassName($this->argument('name')) . 'Controller.php';
+        }
+        return app_path().$ds.'Services'.$ds.$sdirPath.$this->getSingularClassName($this->argument('name')) . 'Service.php';
     }
 
     /**
