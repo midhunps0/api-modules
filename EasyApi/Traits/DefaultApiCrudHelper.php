@@ -38,6 +38,7 @@ trait DefaultApiCrudHelper{
     protected $suggestListSearchMode = 'startswith'; // contains, startswith, endswith
     protected $processRelationsManually = false;
     protected $processMediaManually = false;
+    protected $clientIdFieldName = 'client_id';
 
     public $downloadFileName = 'results';
 
@@ -49,7 +50,7 @@ trait DefaultApiCrudHelper{
             throw new AuthorizationException('The user is not authorised to view '.$name.'.');
         }
         $inputParams = $data;
-        $data = $this->processBeforeIndex($data);
+        $data = $this->processBeforeIndex($data, $data['client_id']);
 
         $itemsCount = null;
         $page = null;
@@ -102,7 +103,7 @@ trait DefaultApiCrudHelper{
             )->get();
         }
 
-        $this->processAfterIndex($inputParams, $results);
+        $this->processAfterIndex($inputParams, $results, $data['client_id']);
         $returnData = $results->toArray();
 
         return [
@@ -135,18 +136,24 @@ trait DefaultApiCrudHelper{
         );
     }
 
-    public function show($id)
+    public function show($id, $clientId = null)
     {
+        $id = $this->processBeforeShow($id, $clientId);
+        $query = $this->modelClass::with($this->showWith())
+        ->where($this->idKey, $id);
+        if (isset($clientId)) {
+            $query->where($this->clientIdFieldName, $clientId);
+        }
         if (count($this->showWith())) {
-            $item = $this->modelClass::with($this->showWith())
-                ->where($this->idKey, $id)->get()->first();
+            $item = $query->get()->first();
         } else {
-            $item = $this->modelClass::where($this->idKey, $id)->get()->first();
+            $item = $query->get()->first();
         }
         $name = ucfirst(Str::lower($this->getModelShortName()));
         if (!$this->authoriseShow($item)) {
             throw new AuthorizationException('The user is not authorised to view '.$name.'.');
         }
+        $this->processAfterShow($item, $clientId);
         return [
             'item' => $item
         ];
@@ -170,8 +177,12 @@ trait DefaultApiCrudHelper{
     public function indexDownload(
         array $searches,
         array $sorts,
-        string $selectedIds
+        string $selectedIds,
+        $clientId = null
     ): array {
+        if (isset($clientId)) {
+            $searches[$this->clientIdFieldName] = $clientId;
+        }
         $queryData = $this->getQueryAndParams(
             $searches,
             $sorts,
@@ -187,12 +198,15 @@ trait DefaultApiCrudHelper{
     public function getIdsForParams(
         array $searches,
         array $sorts,
-        array $filters,
+        $clientId = null
     ): array {
+        if (isset($clientId)) {
+            $searches[$this->clientIdFieldName] = $clientId;
+        }
         $queryData = $this->getQueryAndParams(
             $searches,
             $sorts,
-            $filters
+            []
         );
 
         // DB::statement("SET SQL_MODE=''");
@@ -228,9 +242,12 @@ trait DefaultApiCrudHelper{
         return $this->modelClass::where($this->idKey ,$id)->get()->firsst();
     }
 
-    public function store(array $data): Model
+    public function store(array $data, $clientId = null): Model
     {
-        $data = $this->processBeforeStore($data);
+        if (isset($clientId)) {
+            $data[$this->clientIdFieldName] = $clientId;
+        }
+        $data = $this->processBeforeStore($data, $clientId);
         $name = ucfirst(Str::lower($this->getModelShortName()));
         if (!$this->authoriseStore()) {
             throw new AuthorizationException('Unable to create the '.$name.'. The user is not authorised for this action.');
@@ -300,7 +317,7 @@ trait DefaultApiCrudHelper{
                 $this->processMediaAfterStore($instance);
             }
             DB::commit();
-            $this->processAfterStore($instance);
+            $this->processAfterStore($instance, $clientId);
             return $instance;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -309,9 +326,12 @@ trait DefaultApiCrudHelper{
         }
     }
 
-    public function update($id, array $data)
+    public function update($id, array $data, $clientId = null)
     {
-        $data = $this->processBeforeUpdate($data, $id);
+        if (isset($clientId)) {
+            $data[$this->clientIdFieldName] = $clientId;
+        }
+        $data = $this->processBeforeUpdate($data, $id, $clientId);
 
         $instance = $this->modelClass::find($id);
         $oldInstance = $instance;
@@ -382,7 +402,7 @@ trait DefaultApiCrudHelper{
 //                 $instance->addMediaFromEAInput($fieldName, $val);
 //             }
             DB::commit();
-            $this->processAfterUpdate($oldInstance, $instance);
+            $this->processAfterUpdate($oldInstance, $instance, $clientId);
         } catch (\Exception $e) {
             info('rolled back: '.$e->__toString());
             DB::rollBack();
@@ -391,55 +411,55 @@ trait DefaultApiCrudHelper{
         return $instance;
     }
 
-    public function getIndexValidationRules(): array
+    public function getIndexValidationRules($clientId = null): array
     {
         return $this->indexValidationRules ?? [];
     }
 
-    public function getShowValidationRules($id = null): array
+    public function getShowValidationRules($id = null, $clientId = null): array
     {
         return $this->showValidationRules ?? [];
     }
 
-    public function getStoreValidationRules(): array
+    public function getStoreValidationRules($clientId = null): array
     {
         return $this->storeValidationRules ?? [];
     }
 
-    public function getUpdateValidationRules($id = null): array
+    public function getUpdateValidationRules($id = null, $clientId = null): array
     {
         return $this->updateValidationRules ?? [];
     }
 
-    public function getDeleteValidationRules($id = null): array
+    public function getDeleteValidationRules($id = null, $clientId = null): array
     {
         return $this->deleteValidationRules ?? [];
     }
 
-    private function processBeforeIndex(array $data): array
+    private function processBeforeIndex(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    private function processBeforeShow(array $data): array
+    private function processBeforeShow(array $id, $clientId = null): array
+    {
+        return $id;
+    }
+
+    private function processBeforeStore(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    private function processBeforeStore(array $data): array
+    private function processBeforeUpdate(array $data, $id = null, $clientId = null): array
     {
         return $data;
     }
 
-    private function processBeforeUpdate(array $data, $id = null): array
-    {
-        return $data;
-    }
-
-    private function processBeforeDelete($id): void
+    private function processBeforeDelete($id, $clientId = null): void
     {}
 
-    private function processAfterIndex($data, $results)
+    private function processAfterIndex($data, $results, $clientId = null)
     {
         return [
             'data' => $data,
@@ -447,16 +467,19 @@ trait DefaultApiCrudHelper{
         ];
     }
 
-    private function processAfterStore($instance): void
+    private function processAfterStore($instance, $clientId = null): void
     {}
 
-    private function processAfterUpdate($oldInstance, $instance): void
+    private function processAfterShow($instance, $clientId = null): void
     {}
 
-    private function processAfterDelete($id): void
+    private function processAfterUpdate($oldInstance, $instance, $clientId = null): void
     {}
 
-    public function destroy($id)
+    private function processAfterDelete($id, $clientId = null): void
+    {}
+
+    public function destroy($id, $clientId = null)
     {
         $item = $this->modelClass::find($id);
 
@@ -467,9 +490,9 @@ trait DefaultApiCrudHelper{
         if (!$this->authoriseDestroy($item)) {
             throw new AuthorizationException('Unable to delete the '.$modelName.'. The user is not authorised for this action.');
         }
-        $this->processBeforeDelete($id);
+        $this->processBeforeDelete($id, $clientId);
         $success = $item->delete();
-        $this->processAfterDelete($id);
+        $this->processAfterDelete($id, $clientId);
         return $success;
     }
 
@@ -671,7 +694,7 @@ trait DefaultApiCrudHelper{
         return [];
     }
 
-    public function suggestList($search = null)
+    public function suggestList($search = null, $clientId = null)
     {
         if (isset($search)) {
             switch($this->suggestListSearchMode) {
@@ -696,27 +719,27 @@ trait DefaultApiCrudHelper{
         return $a[count($a) - 1];
     }
 
-    public function prepareForIndexValidation(array $data): array
+    public function prepareForIndexValidation(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    public function prepareForShowValidation(array $data): array
+    public function prepareForShowValidation(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    public function prepareForStoreValidation(array $data): array
+    public function prepareForStoreValidation(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    public function prepareForUpdateValidation(array $data): array
+    public function prepareForUpdateValidation(array $data, $clientId = null): array
     {
         return $data;
     }
 
-    public function prepareForDeleteValidation(array $data): array
+    public function prepareForDeleteValidation(array $data, $clientId = null): array
     {
         return $data;
     }
@@ -733,32 +756,27 @@ trait DefaultApiCrudHelper{
     public function processMediaAfterUpdate(Model $instance)
     {}
 
-    public function authoriseIndex(): bool
+    public function authoriseIndex($clientId = null): bool
     {
         return true;
     }
 
-    public function authoriseShow($item): bool
+    public function authoriseShow($item, $clientId = null): bool
     {
         return true;
     }
 
-    public function authoriseCreate(): bool
+    public function authoriseStore($clientId = null): bool
     {
         return true;
     }
 
-    public function authoriseStore(): bool
+    public function authoriseUpdate($item, $clientId = null): bool
     {
         return true;
     }
 
-    public function authoriseUpdate($item): bool
-    {
-        return true;
-    }
-
-    public function authoriseDestroy($item): bool
+    public function authoriseDestroy($item, $clientId = null): bool
     {
         return true;
     }

@@ -4,15 +4,10 @@
  */
 namespace Modules\Ynotz\EasyApi\Traits;
 
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Modules\Ynotz\EasyApi\Contracts\ApiCrudHelperContract;
-use Modules\Ynotz\EasyApi\ImportExports\DefaultArrayExports;
-use Throwable;
 
-trait ApiMethodsHelper {
+trait ClientApiMethodsHelper {
     use ApiMethods;
     private $itemName = null;
     private $itemsCount = 10;
