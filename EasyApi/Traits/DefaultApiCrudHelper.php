@@ -50,7 +50,7 @@ trait DefaultApiCrudHelper{
             throw new AuthorizationException('The user is not authorised to view '.$name.'.');
         }
         $inputParams = $data;
-        $data = $this->processBeforeIndex($data, $data['client_id']);
+        $data = $this->processBeforeIndex($data, $data[$this->clientIdFieldName] ?? null);
 
         $itemsCount = null;
         $page = null;
