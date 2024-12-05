@@ -103,7 +103,7 @@ trait DefaultApiCrudHelper{
             )->get();
         }
 
-        $this->processAfterIndex($inputParams, $results, $data[$this->clientIdFieldName ?? null]);
+        $this->processAfterIndex($inputParams, $results, $data[$this->clientIdFieldName] ?? null);
         $returnData = $results->toArray();
 
         return [
