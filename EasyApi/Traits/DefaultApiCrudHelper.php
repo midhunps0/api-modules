@@ -114,7 +114,7 @@ trait DefaultApiCrudHelper{
     private function prepareSearchParamsForQuery(array $searchData, $searchTypes): array
     {
         $preparedSearches = [];
-        $searchFieldTypes = $this->getSarchTypes($searchTypes);
+        $searchFieldTypes = $this->searchFieldsOperations($searchTypes);
         foreach ($searchData as $field => $value) {
                 $op = $searchFieldTypes[$field] ?? OperationEnum::EQUAL_TO;
                 array_push($preparedSearches, new SearchUnit($field, $op, $value));
