@@ -4,11 +4,11 @@ namespace $NAMESPACE$;
 
 use App\Services\$CLASS_NAME$Service;
 use Illuminate\Http\Request;
-use Modules\Ynotz\EasyApi\Traits\ApiMethodsHelper;
+use Modules\Ynotz\EasyApi\Traits\$HELPER_TRAIT$;
 
 class $CLASS_NAME$Controller
 {
-    use ApiMethodsHelper;
+    use $HELPER_TRAIT$;
 
     public function __construct($CLASS_NAME$Service $service)
     {

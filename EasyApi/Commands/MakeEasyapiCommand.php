@@ -14,7 +14,7 @@ class MakeEasyapiCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'make:easyapi {name} {cp?} {sp?}';
+    protected $signature = 'make:easyapi {name} {--client} {cp?} {sp?}';
 
     /**
      * The console command description.
@@ -103,6 +103,8 @@ class MakeEasyapiCommand extends Command
         $classNamePlural = Str::plural($classNameSingular);
         $classNamePluralLower = Str::lower($classNamePlural);
 
+        $forClient = $this->option('client');
+        $traitName = $forClient ? 'ClientApiMethodsHelper' : 'ApiMethodsHelper';
         $controllerDirectory = $this->argument('cp');
         $controllerDirectory = implode('\\', explode('/', $controllerDirectory));
         $controllerDirectory = $controllerDirectory != null ? '\\'.$controllerDirectory : '';
@@ -118,6 +120,7 @@ class MakeEasyapiCommand extends Command
                 $arr = [
                     'NAMESPACE'         => $controllerNamespace,
                     'CLASS_NAME'        => $classNameSingular,
+                    'HELPER_TRAIT'        => $traitName,
                     'CLASS_NAME_PLURAL_LOWER' => $classNamePluralLower,
                     'CLASS_NAME_PLURAL' => $classNamePlural
                 ];
