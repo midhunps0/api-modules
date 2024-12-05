@@ -27,7 +27,7 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
         // $this->processRelationsManually = false; // if this is true, the function processRelationsAfterStore(Model $instance) & processRelationsAfterUpdate(Model $instance) should be implemented
         // $this->processMediaManually = false; // if this is true, the function processMediaAfterStore(Model $instance) & processMediaAfterUpdate(Model $instance) should be implemented
         // $this->downloadFileName = 'results';
-        $this->clientIdFieldName = 'client_id';
+        // $this->clientIdFieldName = 'client_id';
     }
 
     private function searchFieldsOperations($data): array
