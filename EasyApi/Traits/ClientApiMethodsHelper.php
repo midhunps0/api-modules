@@ -14,44 +14,44 @@ trait ClientApiMethodsHelper {
     private $resultsName = 'results';
     private ApiCrudHelperContract $connectorService;
 
-    public function index(Request $request)
+    public function index(Request $request, $clientId)
     {
-        return $this->indexMethod($request);
+        return $this->indexMethod($request, $clientId);
     }
 
-    public function show(Request $request, $id)
+    public function show(Request $request, $clientId, $id)
     {
-        return $this->showMethod($request, $id);
+        return $this->showMethod($request, $id, $clientId);
     }
 
-    public function selectIds()
+    public function selectIds($clientId)
     {
-        $this->selectIdsMethod();
+        $this->selectIdsMethod($clientId);
     }
 
-    public function download()
+    public function download($clientId)
     {
-        return $this->downloadMethod();
+        return $this->downloadMethod($clientId);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, $clientId)
     {
         return $this->storeMethod($request);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request,$clientId, $id)
     {
-        return $this->updateMethod($request, $id);
+        return $this->updateMethod($request, $id, $clientId);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request,$clientId, $id)
     {
-        return $this->destroyMethod($request, $id);
+        return $this->destroyMethod($request, $id, $clientId);
     }
 
-    public function suggestlist()
+    public function suggestlist($clientId)
     {
-        return $this->suggestlist();
+        return $this->suggestlist($clientId);
     }
 }
 ?>
