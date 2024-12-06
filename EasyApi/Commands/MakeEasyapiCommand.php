@@ -14,7 +14,7 @@ class MakeEasyapiCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'make:easyapi {name} {--client} {cp?} {sp?}';
+    protected $signature = 'make:easyapi {name} {cp?} {sp?} {--client}';
 
     /**
      * The console command description.
