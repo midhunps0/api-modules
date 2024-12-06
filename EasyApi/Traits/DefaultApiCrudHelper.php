@@ -441,7 +441,7 @@ trait DefaultApiCrudHelper{
         return $data;
     }
 
-    private function processBeforeShow($id, $clientId = null): array
+    private function processBeforeShow($id, $clientId = null)
     {
         return $id;
     }
