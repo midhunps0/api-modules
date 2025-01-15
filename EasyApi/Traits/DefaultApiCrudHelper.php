@@ -563,7 +563,7 @@ trait DefaultApiCrudHelper{
         $searchFn = null;
         info('fieldName');
         info($fieldName);
-        if (strpos('.', $fieldName)) {
+        if (strlen(str_replace('.', '', $fieldName)) != strlen($fieldName)) {
             $arr = explode('.', $fieldName);
             $relName = $this->relations()[0];
             $key = $arr[1];
