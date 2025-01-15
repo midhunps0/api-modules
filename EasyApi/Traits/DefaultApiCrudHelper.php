@@ -561,8 +561,6 @@ trait DefaultApiCrudHelper{
     {
         $key = null;
         $searchFn = null;
-        info('fieldName');
-        info($fieldName);
         if (strlen(str_replace('.', '', $fieldName)) != strlen($fieldName)) {
             $arr = explode('.', $fieldName);
             $relName = $arr[0];
