@@ -29,7 +29,7 @@ trait DefaultApiCrudHelper{
     protected $selects = '*'; // query select keys/calcs
     protected $selIdsKey = 'id'; // selected items id key
     protected $searchesMap = []; // associative array mapping search query params to db columns
-    protected $searchTypesSettings = []; // Associative array mentioning what operation (OperationEnum case) is to be applied on each search field. Default for all fields is OperatoinEnum::EQUAL_TO. This will be overridden by search_types[] input from front-end. item example: 'name' => OperationEnum::EQUAL_TO
+    // protected $searchTypesSettings = []; // Associative array mentioning what operation (OperationEnum case) is to be applied on each search field. Default for all fields is OperatoinEnum::EQUAL_TO. This will be overridden by search_types[] input from front-end. item example: 'name' => OperationEnum::EQUAL_TO
     protected $sortsMap = []; // associative array mapping sort query params to db columns
     protected $orderBy = ['created_at', 'desc'];
     // protected $uniqueSortKey = null; // unique key to sort items. it can be a calculated field to ensure unique values
@@ -123,18 +123,18 @@ trait DefaultApiCrudHelper{
         return $preparedSearches;
     }
 
-    private function getSarchTypes(array $searchTypes): array
-    {
-        return array_merge(
-            $this->searchTypesSettings,
-            array_map(
-                function ($t) {
-                    return OperationEnum::from($t);
-                },
-                $searchTypes
-            )
-        );
-    }
+    // private function getSarchTypes(array $searchTypes): array
+    // {
+    //     return array_merge(
+    //         $this->searchTypesSettings,
+    //         array_map(
+    //             function ($t) {
+    //                 return OperationEnum::from($t);
+    //             },
+    //             $searchTypes
+    //         )
+    //     );
+    // }
 
     public function show($id, $clientId = null)
     {
@@ -561,15 +561,17 @@ trait DefaultApiCrudHelper{
     {
         $key = null;
         $searchFn = null;
+        info('fieldName');
+        info($fieldName);
         if (strpos('.', $fieldName)) {
             $arr = explode('.', $fieldName);
             $relName = $this->relations()[0];
             $key = $arr[1];
-            $searchFn = $this->relations()[$relName][$key]['search_fn'];
+            $searchFn = $this->relations()[$relName][$key]['search_fn'] ?? null;
         } else {
             $relName = $fieldName;
             $key = $this->relations()[$relName]['search_column'];
-            $searchFn = $this->relations()[$relName]['search_fn'];
+            $searchFn = $this->relations()[$relName]['search_fn'] ?? null;
         }
         // If isset(search_fn): execute it
         if (isset($searchFn)) {
