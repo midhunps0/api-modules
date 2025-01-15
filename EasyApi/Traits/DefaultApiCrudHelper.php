@@ -517,7 +517,7 @@ trait DefaultApiCrudHelper{
             $operator = $search->operation->operator();
             $formattedValue = $search->operation->formatSearchValue($search->value);
             if($this->isRelation(explode('.', $field)[0])) {
-                $this->applyRelationSearch($query, $field, $this->relations()[$field]['search_column'], $operator, $formattedValue);
+                $this->applyRelationSearch($query, $field, $operator, $formattedValue);
             } else {
                 $query->where($field, $operator, $formattedValue);
             }
@@ -557,7 +557,54 @@ trait DefaultApiCrudHelper{
         }
         return $query;
     }
-
+    private function applyRelationSearch(Builder $query, $fieldName, $op, $val): void
+    {
+        $key = null;
+        $searchFn = null;
+        if (strpos('.', $fieldName)) {
+            $arr = explode('.', $fieldName);
+            $relName = $this->relations()[0];
+            $key = $arr[1];
+            $searchFn = $this->relations()[$relName][$key]['search_fn'];
+        } else {
+            $relName = $fieldName;
+            $key = $this->relations()[$relName]['search_column'];
+            $searchFn = $this->relations()[$relName]['search_fn'];
+        }
+        // If isset(search_fn): execute it
+        if (isset($searchFn)) {
+            $searchFn($query, $op, $val);
+        } else {
+            // Get relation type
+            $type = $this->getRelationType($relName);
+            // dd($type);
+            switch ($type) {
+                case 'BelongsTo':
+                    $query->whereHas($relName, function ($q) use ($key, $op, $val) {
+                        $q->where($key, $op, $val);
+                    });
+                    break;
+                case 'HasOne':
+                    $query->whereHas($relName, function ($q) use ($key, $op, $val) {
+                        $q->where($key, $op, $val);
+                    });
+                    break;
+                case 'HasMany':
+                    $query->whereHas($relName, function ($q) use ($key, $op, $val) {
+                        $q->where($key, $op, $val);
+                    });
+                    break;
+                case 'BelongsToMany':
+                    $query->whereHas($relName, function ($q) use ($key, $op, $val) {
+                        $q->where($key, $op, $val);
+                    });
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+/*
     private function applyRelationSearch(Builder $query, $relName, $key, $op, $val): void
     {
         // If isset(search_fn): execute it
@@ -593,7 +640,7 @@ trait DefaultApiCrudHelper{
             }
         }
     }
-
+*/
     private function getRelationType(string $relation): string
     {
         $obj = new $this->modelClass;
