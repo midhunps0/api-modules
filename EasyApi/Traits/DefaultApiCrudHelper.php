@@ -335,12 +335,11 @@ trait DefaultApiCrudHelper{
         $data = $this->processBeforeUpdate($data, $id, $clientId);
 
         $instance = $this->modelClass::find($id);
+        $name = ucfirst(Str::lower($this->getModelShortName()));
         if ($instance == null) {
-            $name = $this->getModelShortName();
             throw new ResourceNotFoundException("Couldn't find the $name to update.");
         }
         $oldInstance = $instance;
-        $name = ucfirst(Str::lower($this->getModelShortName()));
         if (!$this->authoriseUpdate($instance)) {
             throw new AuthorizationException('Unable to update the '.$name.'. The user is not authorised for this action.');
         }
