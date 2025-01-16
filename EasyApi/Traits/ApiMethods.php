@@ -240,7 +240,7 @@ trait ApiMethods{
             return response()->json([
                 'success' => true,
                 'instance' => $result,
-                'message' => 'New '.$this->getItemName().' updated.'
+                'message' => $this->getItemName().' updated.'
             ]);
         } catch (\Throwable $e) {
             if (env('APP_DEBUG')) { info($e); }
