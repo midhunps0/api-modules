@@ -16,13 +16,21 @@ class MediaController
     public function fileUpload(Request $request)
     {
         $file = $request->file('file');
-
-        return response()->json(
-            [
-                'success' => true,
-                'data' => MediaHelper::tempFileUpload($file)
-            ]
-        );
+        try {
+            return response()->json(
+                [
+                    'success' => true,
+                    'data' => MediaHelper::tempFileUpload($file)
+                ]
+            );
+        } catch (\Throwable $e) {
+            if (env('APP_DEBUG')) { info($e); }
+            return response()->json([
+                'success' => false,
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     public function fileDelete($request)
