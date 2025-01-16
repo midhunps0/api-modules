@@ -1,14 +1,19 @@
 <?php
 namespace Modules\Ynotz\MediaManager\Helpers;
 
+use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class MediaHelper
 {
     public static function tempFileUpload($file)
     {
+        if ($file == null) {
+            throw new InvalidArgumentException("Null received in place of file");
+        }
         $name = $file->getClientOriginalName();
         $name = str_replace($file->getClientOriginalExtension(), '', $name);
         $name = Str::swap(
