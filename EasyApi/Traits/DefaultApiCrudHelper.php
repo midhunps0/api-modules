@@ -323,7 +323,7 @@ trait DefaultApiCrudHelper{
         } catch (\Exception $e) {
             DB::rollBack();
             info($e->__toString());
-            throw new Exception($e->__toString());
+            throw new Exception("Unexpected error while updating $name. Check your inputs and validation settings. ". $e->__toString());
         }
     }
 
@@ -410,6 +410,7 @@ trait DefaultApiCrudHelper{
         } catch (\Exception $e) {
             info('rolled back: '.$e->__toString());
             DB::rollBack();
+            throw new Exception("Unexpected error while updating $name. Check your inputs and validation settings. ". $e->__toString());
         }
         $instance->refresh();
         return $instance;
