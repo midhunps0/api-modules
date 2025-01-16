@@ -20,6 +20,7 @@ use Modules\Ynotz\EasyAdmin\RenderDataFormats\ShowPageData;
 use Modules\Ynotz\EasyApi\DataObjects\OperationEnum;
 use Modules\Ynotz\EasyApi\DataObjects\SearchUnit;
 use Modules\Ynotz\EasyApi\DataObjects\SortUnit;
+use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 trait DefaultApiCrudHelper{
     protected $modelClass;
@@ -334,6 +335,9 @@ trait DefaultApiCrudHelper{
         $data = $this->processBeforeUpdate($data, $id, $clientId);
 
         $instance = $this->modelClass::find($id);
+        if ($instance == null) {
+            throw new ResourceNotFoundException("Couldn't find the $this->getModelShortName() to update.");
+        }
         $oldInstance = $instance;
         $name = ucfirst(Str::lower($this->getModelShortName()));
         if (!$this->authoriseUpdate($instance)) {
