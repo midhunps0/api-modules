@@ -336,7 +336,8 @@ trait DefaultApiCrudHelper{
 
         $instance = $this->modelClass::find($id);
         if ($instance == null) {
-            throw new ResourceNotFoundException("Couldn't find the $this->getModelShortName() to update.");
+            $name = $this->getModelShortName();
+            throw new ResourceNotFoundException("Couldn't find the $name to update.");
         }
         $oldInstance = $instance;
         $name = ucfirst(Str::lower($this->getModelShortName()));
