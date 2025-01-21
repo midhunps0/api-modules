@@ -55,7 +55,7 @@ trait DefaultApiCrudHelper{
 
         $itemsCount = null;
         $page = null;
-        $paginate = 0;
+        $paginate = config('easyapi.paginate_by_default', 1);
         if (isset($data['paginate'])) {
             $paginate = intval($data['paginate']);
             $itemsCount = $data['items_per_page'] ?? 15;

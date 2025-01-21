@@ -9,4 +9,5 @@ return [
     'permission_service' => Modules\Ynotz\AccessControl\Services\PermissionService::class,
     'role_service' => Modules\Ynotz\AccessControl\Services\RoleService::class,
     'enforce_validation' => true,
+    'paginate_by_default' => true
 ];
