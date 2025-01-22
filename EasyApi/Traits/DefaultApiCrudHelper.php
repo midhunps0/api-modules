@@ -60,10 +60,10 @@ trait DefaultApiCrudHelper{
             $paginate = intval($data['paginate']);
             $itemsCount = $data['items_per_page'] ?? 15;
             $page = $data['page'] ?? 1;
-            unset($data['paginate']);
-            unset($data['items_per_page']);
-            unset($data['page']);
         }
+        unset($data['paginate']);
+        unset($data['items_per_page']);
+        unset($data['page']);
         $selectedIds = null;
         if (isset($data['selected_ids'])) {
             $selectedIds = $data['selected_ids'];
