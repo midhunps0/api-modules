@@ -413,6 +413,21 @@ trait DefaultApiCrudHelper{
         return $instance;
     }
 
+    /**
+     * function ownFieldsCustomSearches
+     * Define array of search keys(fields) and their custom search functions
+     * @return array
+     */
+    private function ownFieldsCustomSearches(): array
+    {
+        return [
+            // 'search' => function ($query, $field, $operator, $formattedValue) {
+            //     $query->where('name', $formattedValue)
+            //         ->orWhere('phone', $formattedValue);
+            // }
+        ];
+    }
+
     public function getIndexValidationRules($clientId = null): array
     {
         return $this->indexValidationRules ?? [];
@@ -521,7 +536,12 @@ trait DefaultApiCrudHelper{
             if($this->isRelation(explode('.', $field)[0])) {
                 $this->applyRelationSearch($query, $field, $operator, $formattedValue);
             } else {
-                $query->where($field, $operator, $formattedValue);
+                $searchFn = $this->ownFieldsCustomSearches()[$field];
+                if (isset($searchFn)) {
+                    $searchFn($query, $field, $operator, $formattedValue);
+                } else {
+                    $query->where($field, $operator, $formattedValue);
+                }
             }
         }
         return $query;

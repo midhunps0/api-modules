@@ -105,6 +105,21 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
         // ]);
     }
 
+    /**
+     * function ownFieldsCustomSearches
+     * Define array of search keys(fields) and their custom search functions
+     * @return array
+     */
+    private function ownFieldsCustomSearches(): array
+    {
+        return [
+            // 'search' => function ($query, $field, $operator, $formattedValue) {
+            //     $query->where('name', $formattedValue)
+            //         ->orWhere('phone', $formattedValue);
+            // }
+        ];
+    }
+
     public function getStoreValidationRules(): array
     {
         return [];
