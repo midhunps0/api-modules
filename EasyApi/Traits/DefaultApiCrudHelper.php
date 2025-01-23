@@ -536,8 +536,8 @@ trait DefaultApiCrudHelper{
             if($this->isRelation(explode('.', $field)[0])) {
                 $this->applyRelationSearch($query, $field, $operator, $formattedValue);
             } else {
-                $searchFn = $this->ownFieldsCustomSearches()[$field];
-                if (isset($searchFn)) {
+                if (isset($this->ownFieldsCustomSearches()[$field])) {
+                    $searchFn = $this->ownFieldsCustomSearches()[$field];
                     $searchFn($query, $field, $operator, $formattedValue);
                 } else {
                     $query->where($field, $operator, $formattedValue);
