@@ -42,6 +42,7 @@ trait DefaultApiCrudHelper{
     protected $clientIdFieldName = 'client_id';
 
     public $downloadFileName = 'results';
+    private $queryData;
 
     public function index(
         $data
@@ -61,6 +62,7 @@ trait DefaultApiCrudHelper{
         unset($data['paginate']);
         unset($data['items_per_page']);
         unset($data['page']);
+        $this->queryData = $data;
         $selectedIds = null;
         if (isset($data['selected_ids'])) {
             $selectedIds = $data['selected_ids'];
@@ -121,6 +123,10 @@ trait DefaultApiCrudHelper{
         return $preparedSearches;
     }
 
+    private function searchFieldsOperations(): array
+    {
+        return [];
+    }
     // private function getSarchTypes(array $searchTypes): array
     // {
     //     return array_merge(
@@ -242,6 +248,7 @@ trait DefaultApiCrudHelper{
 
     public function store(array $data, $clientId = null): Model
     {
+        $this->queryData = $data;
         if (isset($clientId)) {
             $data[$this->clientIdFieldName] = $clientId;
         }
@@ -326,6 +333,7 @@ trait DefaultApiCrudHelper{
 
     public function update($id, array $data, $clientId = null)
     {
+        $this->queryData = $data;
         if (isset($clientId)) {
             $data[$this->clientIdFieldName] = $clientId;
         }
@@ -410,7 +418,11 @@ trait DefaultApiCrudHelper{
             throw new Exception("Unexpected error while updating $name. Check your inputs and validation settings. ". $e->__toString());
         }
         $instance->refresh();
-        return $instance;
+        $returnQuery = $this->modelClass::where($this->idKey, $instance->id);
+        if(count($this->showWith()) > 0) {
+            $returnQuery->with($this->showWith());
+        }
+        return $returnQuery->get()->first();
     }
 
     /**
@@ -595,7 +607,7 @@ trait DefaultApiCrudHelper{
         }
         // If isset(search_fn): execute it
         if (isset($searchFn)) {
-            $searchFn($query, $op, $val);
+            $searchFn($query, $fieldName, $op, $val);
         } else {
             // Get relation type
             $type = $this->getRelationType($relName);
