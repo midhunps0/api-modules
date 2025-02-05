@@ -326,6 +326,7 @@ trait DefaultApiCrudHelper{
             return $instance;
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->errorAfterStore($e);
             info($e->__toString());
             throw new Exception("Unexpected error while updating $name. Check your inputs and validation settings. ". $e->__toString());
         }
@@ -415,6 +416,7 @@ trait DefaultApiCrudHelper{
         } catch (\Exception $e) {
             info('rolled back: '.$e->__toString());
             DB::rollBack();
+            $this->errorAfterUpdate($e);
             throw new Exception("Unexpected error while updating $name. Check your inputs and validation settings. ". $e->__toString());
         }
         $instance->refresh();
@@ -506,6 +508,12 @@ trait DefaultApiCrudHelper{
     {}
 
     private function processAfterDelete($id, $clientId = null): void
+    {}
+
+    private function errorAfterStore($error): void
+    {}
+
+    private function errorAfterUpdate($error): void
     {}
 
     public function destroy($id, $clientId = null)
