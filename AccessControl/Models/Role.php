@@ -46,7 +46,7 @@ class Role extends Model
                 $permission = Permission::where('name', $p)->get()->first();
             }
             if (isset($permission)) {
-                $this->permissions()->attach($permission);
+                $this->permissions()->syncWithoutDetaching([$permission->id]);
             }
         }
     }
