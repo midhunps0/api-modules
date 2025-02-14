@@ -105,6 +105,11 @@ class $CLASS_NAME$Service implements ApiCrudHelperContract {
         // ]);
     }
 
+    public function showWith(): array
+    {
+        return [];
+    }
+
     /**
      * function ownFieldsCustomSearches
      * Define array of search keys(fields) and their custom search functions
