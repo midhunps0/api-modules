@@ -275,7 +275,6 @@ trait DefaultApiCrudHelper{
         DB::beginTransaction();
         try {
             $instance = $this->modelClass::create($ownFields);
-
             //attach relationship instances as per the relation
             if (!$this->processRelationsManually) {
                 foreach ($relations as $rel => $val) {
