@@ -237,7 +237,7 @@ trait ApiMethodsHelper {
 
             return response()->json([
                 'success' => true,
-                'instance' => $result,
+                'data' => $result,
                 'message' => 'New '.$this->getItemName().' updated.'
             ]);
         } catch (\Throwable $e) {

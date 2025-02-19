@@ -239,7 +239,7 @@ trait ApiMethods{
 
             return response()->json([
                 'success' => true,
-                'instance' => $result,
+                'data' => $result,
                 'message' => $this->getItemName().' updated.'
             ]);
         } catch (\Throwable $e) {
