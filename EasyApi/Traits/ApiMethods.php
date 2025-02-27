@@ -330,6 +330,26 @@ trait ApiMethods{
         $t = explode('\\', $this->connectorService->getModelShortName());
         return Str::snake(array_pop($t));
     }
+
+    private function serviceMethod($method, $data = [])
+    {
+        try {
+            $result = $this->connectorService->$method(
+                $data
+            );
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+        } catch (\Throwable $e) {
+            if (env('APP_DEBUG')) { info($e); }
+            return response()->json([
+                'success' => false,
+                'error' => $e->__toString(),
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
 }
 
 ?>

@@ -19,6 +19,11 @@ trait ApiMethodsHelper {
     private $resultsName = 'results';
     private ApiCrudHelperContract $connectorService;
 
+    public function serviceMethodResult($method, $data = [])
+    {
+        return $this->serviceMethod($method, $data);
+    }
+
     public function index(Request $request)
     {
         return $this->indexMethod($request);
