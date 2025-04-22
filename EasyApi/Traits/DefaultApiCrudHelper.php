@@ -344,7 +344,7 @@ trait DefaultApiCrudHelper{
         if ($instance == null) {
             throw new ResourceNotFoundException("Couldn't find the $name to update.");
         }
-        $oldInstance = $instance;
+        $oldInstance = clone $instance;
         if (!$this->authoriseUpdate($instance)) {
             throw new AuthorizationException('Unable to update the '.$name.'. The user is not authorised for this action.');
         }
