@@ -573,27 +573,34 @@ trait DefaultApiCrudHelper{
             if(count($data) != 2) {
                 throw new InvalidFormatException("Inside setSortParams: argument \$sorts shall be an array of strings of pattern 'field::direction'.");
             }
-            $key = $sortsMap[$data[0]] ?? $data[0];
-            if (isset($usortkey) && isset($map[$data[0]])) {
-                $type = $key['type'];
-                $kname = $key['name'];
-                switch ($type) {
-                    case 'string';
-                        $query->orderByRaw('CONCAT('.$kname.',\'::\','.$usortkey.') '.$data[1]);
-                        break;
-                    case 'integer';
-                        $query->orderByRaw('CONCAT(LPAD(ROUND('.$kname.',0),20,\'00\'),\'::\','.$usortkey.') '.$data[1]);
-                        break;
-                    case 'float';
-                        $query->orderByRaw('CONCAT( LPAD(ROUND('.$kname.',0) * 100,20,\'00\') ,\'::\','.$usortkey.') '.$data[1]);
-                        break;
-                    default:
-                        $query->orderByRaw('CONCAT('.$kname.'\'::\','.$usortkey.') '.$data[1]);
-                        break;
-                }
+            $field = $sortsMap[$data[0]] ?? $data[0];
+            $sortFn = $this->sortFunctions()[$field];
+            if(isset($sortFn)) {
+                $sortFn($query, $data[1]);
             } else {
-                $query->orderBy($data[0], $data[1]);
+                $query->orderBy($field, $data[1]);
             }
+
+            // if (isset($usortkey) && isset($map[$data[0]])) {
+            //     $type = $key['type'];
+            //     $kname = $key['name'];
+            //     switch ($type) {
+            //         case 'string';
+            //             $query->orderByRaw('CONCAT('.$kname.',\'::\','.$usortkey.') '.$data[1]);
+            //             break;
+            //         case 'integer';
+            //             $query->orderByRaw('CONCAT(LPAD(ROUND('.$kname.',0),20,\'00\'),\'::\','.$usortkey.') '.$data[1]);
+            //             break;
+            //         case 'float';
+            //             $query->orderByRaw('CONCAT( LPAD(ROUND('.$kname.',0) * 100,20,\'00\') ,\'::\','.$usortkey.') '.$data[1]);
+            //             break;
+            //         default:
+            //             $query->orderByRaw('CONCAT('.$kname.'\'::\','.$usortkey.') '.$data[1]);
+            //             break;
+            //     }
+            // } else {
+            //     $query->orderBy($key, $data[1]);
+            // }
 
         }
         return $query;
@@ -736,7 +743,20 @@ trait DefaultApiCrudHelper{
     {
         return $results;
     }
+    private function sortFunctions(): array
+    {
+        return [];
 
+        // Example:
+        // return [
+        //     'contact_name' => function($query, $sortOrder) {
+        //         $query->orderBy(
+        //             Contact::select('name')
+        //                 ->whereColumn('contact.id', 'leads.contact_id')
+        //         );
+        //     }
+        // ];
+    }
     // protected function getSelectedIdsUrl(): string
     // {
     //     return route(Str::lower(Str::plural($this->getModelShortName())).'.selectIds');
