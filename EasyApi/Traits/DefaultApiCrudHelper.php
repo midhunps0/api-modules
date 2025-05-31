@@ -574,7 +574,7 @@ trait DefaultApiCrudHelper{
                 throw new InvalidFormatException("Inside setSortParams: argument \$sorts shall be an array of strings of pattern 'field::direction'.");
             }
             $field = $sortsMap[$data[0]] ?? $data[0];
-            $sortFn = $this->sortFunctions()[$field];
+            $sortFn = $this->sortFunctions()[$field] ?? null;
             if(isset($sortFn)) {
                 $sortFn($query, $data[1]);
             } else {
