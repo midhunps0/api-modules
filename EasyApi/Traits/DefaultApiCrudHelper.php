@@ -42,7 +42,7 @@ trait DefaultApiCrudHelper{
     protected $clientIdFieldName = 'client_id';
 
     public $downloadFileName = 'results';
-    private $queryData;
+    private $queryData = [];
 
     public function index(
         $data
@@ -62,7 +62,7 @@ trait DefaultApiCrudHelper{
         unset($data['paginate']);
         unset($data['items_per_page']);
         unset($data['page']);
-        $this->queryData = $data;
+        $this->queryData = [...$this->queryData, ...$data];
         $selectedIds = null;
         if (isset($data['selected_ids'])) {
             $selectedIds = $data['selected_ids'];
