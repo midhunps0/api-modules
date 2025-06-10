@@ -86,21 +86,21 @@ trait DefaultApiCrudHelper{
             $selectedIds,
         );
 
-        if($paginate == 1) {
-            $results = $queryData->orderBy(
+        if (isset($this->orderBy)) {
+            $queryData->orderBy(
                 $this->orderBy[0],
                 $this->orderBy[1]
-            )->paginate(
+            );
+        }
+        if($paginate == 1) {
+            $results = $queryData->paginate(
                 $itemsCount,
                 $this->selects,
                 'page',
                 $page
             );
         } else {
-            $results = $queryData->orderBy(
-                $this->orderBy[0],
-                $this->orderBy[1]
-            )->get();
+            $results = $queryData->get();
         }
 
         $this->processAfterIndex($inputParams, $results, $data[$this->clientIdFieldName] ?? null);
