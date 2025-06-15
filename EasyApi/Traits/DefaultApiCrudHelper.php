@@ -143,8 +143,9 @@ trait DefaultApiCrudHelper{
     public function show($id, $clientId = null)
     {
         $id = $this->processBeforeShow($id, $clientId);
-        $query = $this->modelClass::with($this->showWith())
-        ->where($this->idKey, $id);
+        // $query = $this->modelClass::with($this->showWith())
+        // ->where($this->idKey, $id);
+        $query = $this->getShowQuery($id);
         if (isset($clientId)) {
             $query->where($this->clientIdFieldName, $clientId);
         }
@@ -171,6 +172,12 @@ trait DefaultApiCrudHelper{
     private function getQuery()
     {
         return $this->query ?? $this->modelClass::query();
+    }
+
+    private function getShowQuery($id)
+    {
+        return $this->modelClass::with($this->showWith())
+        ->where($this->idKey, $id);
     }
 
     private function getItemIds($results) {
