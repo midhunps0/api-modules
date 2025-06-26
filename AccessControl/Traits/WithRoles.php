@@ -27,6 +27,7 @@ trait WithRoles{
         } elseif ($role instanceof Role) {
             return in_array($role->id, array_values($this->roles()->pluck('id')->toArray()));
         }
+        return false;
     }
 
     public function hasAnyRole(array $roles): bool
