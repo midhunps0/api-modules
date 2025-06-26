@@ -29,6 +29,24 @@ trait WithRoles{
         }
     }
 
+    public function hasAnyRole(array $roles): bool
+    {
+        $status = false;
+        foreach ($roles as $role) {
+            if (is_int($role)) {
+                $status = in_array($role, array_values($this->roles()->pluck('id')->toArray()));
+                if($status){ break; }
+            } elseif (is_string($role)) {
+                $status = in_array($role, array_values($this->roles()->pluck('name')->toArray()));
+                if($status){ break; }
+            } elseif ($role instanceof Role) {
+                $status = in_array($role->id, array_values($this->roles()->pluck('id')->toArray()));
+                if($status){ break; }
+            }
+        }
+        return $status;
+    }
+
     public function permissions(): array
     {
         $permissions = [];
