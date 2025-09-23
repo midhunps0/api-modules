@@ -25,14 +25,7 @@ trait ApiMethods{
             );
 
             if ($validator->fails()) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'error' => $validator->errors(),
-                        'message' => $validator->errors()
-                    ],
-                    status: 422
-                );
+                return $this->getResponseMessage($validator);
             }
         }
 
@@ -69,14 +62,7 @@ trait ApiMethods{
             );
 
             if ($validator->fails()) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'error' => $validator->errors(),
-                        'message' => $validator->errors()
-                    ],
-                    status: 422
-                );
+                return $this->getResponseMessage($validator);
             }
         }
 
@@ -165,13 +151,7 @@ trait ApiMethods{
                 );
 
                 if ($validator->fails()) {
-                    return response()->json(
-                        [
-                            'success' => false,
-                            'errors' => $validator->errors()
-                        ],
-                        status: 422
-                    );
+                    return $this->getResponseMessage($validator);
                 }
                 $instance = $this->connectorService->store(
                     $validator->validated(),
@@ -214,13 +194,7 @@ trait ApiMethods{
                 $validator = Validator::make($this->connectorService->prepareForUpdateValidation($request->all(), $clientId), $rules);
 
                 if ($validator->fails()) {
-                    return response()->json(
-                        [
-                            'success' => false,
-                            'errors' => $validator->errors()
-                        ],
-                        status: 422
-                    );
+                    return $this->getResponseMessage($validator);
                 }
                 $result = $this->connectorService->update($id, $validator->validated(), $clientId);
             } else {
@@ -266,13 +240,7 @@ trait ApiMethods{
             );
 
             if ($validator->fails()) {
-                return response()->json(
-                    [
-                        'success' => false,
-                        'errors' => $validator->errors()
-                    ],
-                    status: 422
-                );
+                return $this->getResponseMessage($validator);
             }
         }
         try {
@@ -349,6 +317,21 @@ trait ApiMethods{
                 'message' => $e->getMessage()
             ]);
         }
+    }
+
+    private function getResponseMessage($validator)
+    {
+        $errors = $validator->errors()->all(); 
+        $message = implode('. ', $errors) . '.'; // ensures ending with a period
+    
+        return response()->json(
+            [
+                'success' => false,
+                'error'   => $validator->errors(),
+                'message' => $message,
+            ],
+            422
+        );
     }
 }
 
