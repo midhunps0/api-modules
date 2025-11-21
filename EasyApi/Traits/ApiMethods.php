@@ -5,6 +5,7 @@
 namespace Modules\Ynotz\EasyApi\Traits;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Modules\Ynotz\EasyApi\ImportExports\DefaultArrayExports;
@@ -38,6 +39,9 @@ trait ApiMethods{
                 'data' => $result
             ]);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -72,6 +76,9 @@ trait ApiMethods{
                 'data' => $this->connectorService->show($id, $clientId)
             ]);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -94,6 +101,9 @@ trait ApiMethods{
                 'ids' => $ids
             ]);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -123,6 +133,9 @@ trait ApiMethods{
                     .$this->request->input('format', 'xlsx')
             );
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -176,6 +189,9 @@ trait ApiMethods{
                 'message' => 'New '.$this->getItemName().' added.'
             ]);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -217,6 +233,9 @@ trait ApiMethods{
                 'message' => $this->getItemName().' updated.'
             ]);
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             if (env('APP_DEBUG')) { info($e); }
             return response()->json([
                 'success' => false,
@@ -260,6 +279,9 @@ trait ApiMethods{
                 ]);
             }
         } catch (\Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             $debug = env('APP_DEBUG');
             if ($debug) { info($e); }
             return response()->json([
