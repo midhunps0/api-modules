@@ -14,6 +14,7 @@ use Modules\Ynotz\EasyAdmin\InputUpdateResponse;
 use Modules\Ynotz\EasyAdmin\Services\FormHelper;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Modules\Ynotz\EasyAdmin\RenderDataFormats\CreatePageData;
 use Modules\Ynotz\EasyAdmin\RenderDataFormats\ShowPageData;
@@ -21,6 +22,8 @@ use Modules\Ynotz\EasyApi\DataObjects\OperationEnum;
 use Modules\Ynotz\EasyApi\DataObjects\SearchUnit;
 use Modules\Ynotz\EasyApi\DataObjects\SortUnit;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
+
+use function PHPUnit\Framework\isEmpty;
 
 trait DefaultApiCrudHelper{
     protected $modelClass;
@@ -85,12 +88,25 @@ trait DefaultApiCrudHelper{
             $sortParams,
             $selectedIds,
         );
-
-        if (isset($this->orderBy)) {
-            $queryData->orderBy(
-                $this->orderBy[0],
-                $this->orderBy[1]
-            );
+        // Log::info("checking for order by");
+        // Log::info('order by', $this->orderBy);
+        if(!empty($this->orderBy)) {
+            // info("inside order by");
+            if(is_array($this->orderBy[0])) {
+            // Log::info("multiple order by");
+                foreach($this->orderBy as $ob) {
+                    $queryData = $queryData->orderBy(
+                        $ob[0],
+                        $ob[1]
+                    );
+                }
+            } else {
+            Log::info("single order by");
+                $queryData = $queryData->orderBy(
+                    $this->orderBy[0],
+                    $this->orderBy[1]
+                );
+            }
         }
         if($paginate == 1) {
             $results = $queryData->paginate(
