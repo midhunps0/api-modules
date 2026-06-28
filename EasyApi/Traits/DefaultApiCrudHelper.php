@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Contracts\Database\Query\Builder;
 use Modules\Ynotz\EasyAdmin\InputUpdateResponse;
 use Modules\Ynotz\EasyAdmin\Services\FormHelper;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Modules\Ynotz\EasyAdmin\RenderDataFormats\CreatePageData;
@@ -66,11 +66,12 @@ trait DefaultApiCrudHelper{
         unset($data['items_per_page']);
         unset($data['page']);
         $this->queryData = [...$this->queryData, ...$data];
-        $selectedIds = null;
-        if (isset($data['selected_ids'])) {
-            $selectedIds = $data['selected_ids'];
-            unset($data['selected_ids']);
-        }
+        // $selectedIds = null;
+        // if (isset($data['selected_ids'])) {
+        //     $selectedIds = $data['selected_ids'];
+        //     unset($data['selected_ids']);
+        // }
+        /*
         $sortParams = [];
         if (isset($data['sorts'])) {
             $sortParams = $data['sorts'];
@@ -88,6 +89,8 @@ trait DefaultApiCrudHelper{
             $sortParams,
             $selectedIds,
         );
+        */
+        $queryData = $this->buildFilteredQuery($data);
         // Log::info("checking for order by");
         // Log::info('order by', $this->orderBy);
         if(!empty($this->orderBy)) {
@@ -131,7 +134,7 @@ trait DefaultApiCrudHelper{
     private function prepareSearchParamsForQuery(array $searchData, $searchTypes): array
     {
         $preparedSearches = [];
-        $searchFieldTypes = $this->searchFieldsOperations($searchTypes);
+        $searchFieldTypes = $this->searchFieldsOperations();
         foreach ($searchData as $field => $value) {
                 $op = $searchFieldTypes[$field] ?? OperationEnum::EQUAL_TO;
                 array_push($preparedSearches, new SearchUnit($field, $op, $value));
@@ -207,17 +210,26 @@ trait DefaultApiCrudHelper{
         string $selectedIds,
         $clientId = null
     ): array {
+
         if (isset($clientId)) {
             $searches[$this->clientIdFieldName] = $clientId;
         }
-        $queryData = $this->getQueryAndParams(
-            $searches,
-            $sorts,
-            $selectedIds
-        );
-            // DB::statement("SET SQL_MODE=''");
-        $results = $queryData['query']->select($this->selects)->get();
-        // DB::statement("SET SQL_MODE='only_full_group_by'");
+
+        $payload = $searches;
+        $payload['sorts'] = $sorts;
+
+        if (strlen(trim($selectedIds)) > 0) {
+            $payload['selection_mode'] = 'selected';
+            $payload['selected_ids'] = $selectedIds;
+        } else {
+            $payload['selection_mode'] = 'filter';
+        }
+
+        $query = $this->resolveSelectionQuery($payload);
+
+        $results = $query
+            ->select($this->selects)
+            ->get();
 
         return $this->formatIndexResults($results->toArray());
     }
@@ -227,39 +239,68 @@ trait DefaultApiCrudHelper{
         array $sorts,
         $clientId = null
     ): array {
+
         if (isset($clientId)) {
             $searches[$this->clientIdFieldName] = $clientId;
         }
-        $queryData = $this->getQueryAndParams(
-            $searches,
-            $sorts,
-            []
+
+        $payload = $searches;
+        $payload['sorts'] = $sorts;
+        $payload['selection_mode'] = 'filter';
+
+        $query = $this->resolveSelectionQuery($payload);
+
+        return $query
+            ->distinct()
+            ->pluck($this->idKey)
+            ->toArray();
+    }
+
+    protected function buildFilteredQuery(array $data): Builder
+    {
+        $sortParams = $data['sorts'] ?? [];
+        unset($data['sorts']);
+
+        $searchTypes = $data['search_types'] ?? [];
+        unset($data['search_types']);
+
+        unset(
+            $data['paginate'],
+            $data['items_per_page'],
+            $data['page'],
+            $data['selection_mode'],
+            $data['selected_ids']
         );
 
-        // DB::statement("SET SQL_MODE=''");
+        $preparedSearchParams = $this->prepareSearchParamsForQuery(
+            $data,
+            $searchTypes
+        );
 
-        $results = $queryData['query']->select($this->selects)->get()->pluck($this->idKey)->unique()->toArray();
-        // DB::statement("SET SQL_MODE='only_full_group_by'");
-        return $results;
+        return $this->getQueryAndParams(
+            $preparedSearchParams,
+            $sortParams
+        );
     }
 
     public function getQueryAndParams(
         array $searches,
         array $sorts,
-    ) {
+    ): Builder
+    {
         $query = $this->getQuery();
 
-        // if (count($relations = $this->relations()) > 0) {
-        //     $query->with(array_keys($relations));
-        // }
+        $query = $this->setSearchParams(
+            $query,
+            $searches,
+            $this->searchesMap
+        );
 
-        $query = $this->setSearchParams($query, $searches, $this->searchesMap);
-        $query = $this->setSortParams($query, $sorts, $this->sortsMap);
-
-        if (isset($selectedIds) && strlen(trim($selectedIds)) > 0) {
-            $ids = explode('|', $selectedIds);
-            $query = $this->querySelectedIds($query, $this->selIdsKey, $ids);
-        }
+        $query = $this->setSortParams(
+            $query,
+            $sorts,
+            $this->sortsMap
+        );
 
         return $query;
     }
@@ -913,6 +954,47 @@ trait DefaultApiCrudHelper{
     public function authoriseDestroy($item, $clientId = null): bool
     {
         return true;
+    }
+
+    public function resolveSelectionQuery(array $data): Builder
+    {
+        $selectionMode = $data['selection_mode'] ?? 'filter';
+
+        unset(
+            $data['selection_mode'],
+            $data['paginate'],
+            $data['items_per_page'],
+            $data['page']
+        );
+
+        switch ($selectionMode) {
+
+            case 'selected':
+
+                $ids = $data['selected_ids'] ?? [];
+                unset($data['selected_ids']);
+
+                if (is_string($ids)) {
+                    $ids = preg_split('/[|,]/', $ids);
+                } elseif (!is_array($ids)) {
+                    $ids = [];
+                }
+
+                $ids = collect($ids)
+                    ->filter(fn ($id) => is_numeric($id))
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                return $this->getQuery()
+                    ->whereIn($this->idKey, $ids);
+
+            case 'filter':
+            default:
+
+                return $this->buildFilteredQuery($data);
+        }
     }
 }
 ?>
