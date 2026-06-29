@@ -958,7 +958,7 @@ trait DefaultApiCrudHelper{
 
     public function resolveSelectionQuery(array $data): Builder
     {
-        $selectionMode = $data['selection_mode'] ?? 'filter';
+        $selectionMode = $data['selection_mode'] ?? 'selected';
 
         unset(
             $data['selection_mode'],
