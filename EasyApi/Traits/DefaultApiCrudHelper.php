@@ -256,7 +256,7 @@ trait DefaultApiCrudHelper{
             ->toArray();
     }
 
-    protected function buildFilteredQuery(array $data): Builder
+    public function buildFilteredQuery(array $data): Builder
     {
         $sortParams = $data['sorts'] ?? [];
         unset($data['sorts']);
