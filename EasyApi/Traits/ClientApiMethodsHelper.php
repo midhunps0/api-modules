@@ -36,7 +36,7 @@ trait ClientApiMethodsHelper {
 
     public function store(Request $request, $clientId)
     {
-        return $this->storeMethod($request);
+        return $this->storeMethod($request, $clientId);
     }
 
     public function update(Request $request,$clientId, $id)
