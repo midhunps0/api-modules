@@ -104,7 +104,7 @@ trait DefaultApiCrudHelper{
                     );
                 }
             } else {
-            Log::info("single order by");
+            // Log::info("single order by");
                 $queryData = $queryData->orderBy(
                     $this->orderBy[0],
                     $this->orderBy[1]
@@ -584,16 +584,30 @@ trait DefaultApiCrudHelper{
         $item = $this->modelClass::find($id);
 
         $modelName = ucfirst(Str::lower($this->getModelShortName()));
+
         if ($item == null) {
-            throw new ModelNotFoundException("The $modelName with id $id does not exist.");
+            throw new ModelNotFoundException(
+                "The $modelName with id $id does not exist."
+            );
         }
+
         if (!$this->authoriseDestroy($item)) {
-            throw new AuthorizationException('Unable to delete the '.$modelName.'. The user is not authorised for this action.');
+            throw new AuthorizationException(
+                'Unable to delete the ' . $modelName .
+                '. The user is not authorised for this action.'
+            );
         }
-        $this->processBeforeDelete($id, $clientId);
-        $success = $item->delete();
-        $this->processAfterDelete($id, $clientId);
-        return $success;
+
+        return DB::transaction(function () use ($item, $id, $clientId) {
+
+            $this->processBeforeDelete($id, $clientId);
+
+            $success = $item->delete();
+
+            $this->processAfterDelete($id, $clientId);
+
+            return $success;
+        });
     }
 
     private function querySelectedIds(Builder $query, string $idKey, array $ids): Builder
